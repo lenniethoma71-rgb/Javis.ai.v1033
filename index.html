@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="JARVIS"/>
+  <meta name="theme-color" content="#020617"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <title>J.A.R.V.I.S. AI</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;background:#020617;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-thumb{background:#334155;border-radius:2px;}
+    #app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:700px;margin:0 auto;padding:10px;}
+    .header{background:#0f172a;border-radius:16px;border:1px solid #1e293b;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:7px;position:relative;overflow:hidden;flex-shrink:0;}
+    .hat-wrap{flex-shrink:0;}
+    .header-info{flex:1;min-width:0;}
+    .jarvis-title{font-size:18px;font-weight:900;letter-spacing:3px;color:#60a5fa;}
+    .jarvis-sub{font-size:8px;color:#475569;letter-spacing:1px;margin:1px 0 3px;}
+    .badges{display:flex;gap:3px;flex-wrap:wrap;}
+    .badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:8px;background:#1e40af;color:#60a5fa;}
+    .badge.god{background:#92400e;color:#fbbf24;}
+    .badge.lvl{background:#3b0764;color:#a855f7;}
+    .header-btns{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+    .hbtn{border:none;border-radius:8px;padding:5px 9px;font-weight:800;font-size:9px;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+    .tabs{display:flex;gap:3px;margin-bottom:7px;flex-shrink:0;}
+    .tab{flex:1;padding:7px 2px;border:none;border-radius:9px;font-weight:600;font-size:10px;cursor:pointer;background:#0f172a;color:#64748b;transition:all .2s;}
+    .tab.active{background:#60a5fa;color:#fff;}
+    .panel{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
+    .panel.active{display:flex;}
+
+    /* SENSOR BAR */
+    .sensor-bar{display:flex;gap:5px;margin-bottom:7px;flex-shrink:0;}
+    .sensor-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;cursor:pointer;font-size:9px;color:#64748b;font-weight:600;transition:all .2s;border:none;}
+    .sensor-btn.active{background:#0f172a;border:1px solid #60a5fa;color:#60a5fa;}
+    .sensor-btn.recording{background:#0f172a;border:1px solid #f43f5e;color:#f43f5e;animation:pulse-red 1s infinite;}
+    .sensor-icon{font-size:18px;}
+    .sensor-status{font-size:8px;text-align:center;min-height:10px;}
+    @keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 #f43f5e40}50%{box-shadow:0 0 0 6px #f43f5e00}}
+    @keyframes pulse-blue{0%,100%{box-shadow:0 0 0 0 #60a5fa40}50%{box-shadow:0 0 0 6px #60a5fa00}}
+
+    /* CHAT */
+    .chat-messages{flex:1;overflow-y:auto;background:#0f172a;border-radius:14px;border:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:7px;min-height:0;}
+    .msg{display:flex;align-items:flex-start;gap:7px;animation:fadeIn .3s ease;}
+    .msg.user{flex-direction:row-reverse;}
+    .msg-bubble{max-width:78%;padding:8px 11px;border-radius:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+    .msg.user .msg-bubble{background:#1e40af;color:#93c5fd;border-top-right-radius:4px;}
+    .msg.ai .msg-bubble{background:#1e293b;color:#cbd5e1;border-top-left-radius:4px;}
+    .msg-avatar{width:24px;height:24px;border-radius:7px;background:#1e40af;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px;}
+    .msg-img{max-width:200px;border-radius:8px;margin-top:4px;display:block;}
+    .chat-input-row{display:flex;gap:5px;flex-shrink:0;}
+    .chat-input{flex:1;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:9px 11px;color:#e2e8f0;font-size:13px;resize:none;line-height:1.5;font-family:inherit;min-height:40px;max-height:80px;}
+    .chat-input:focus{outline:none;border-color:#3b82f6;}
+    .send-btn{background:#60a5fa;color:#fff;border:none;border-radius:10px;padding:0 14px;font-size:16px;cursor:pointer;font-weight:700;flex-shrink:0;}
+    .mic-btn{background:#1e293b;border:none;border-radius:10px;padding:0 12px;font-size:16px;cursor:pointer;flex-shrink:0;color:#64748b;transition:all .2s;}
+    .mic-btn.active{background:#f43f5e20;color:#f43f5e;animation:pulse-red 1s infinite;}
+    .dots{display:inline-flex;gap:4px;align-items:center;padding:4px 0;}
+    .dot{width:6px;height:6px;border-radius:50%;background:#60a5fa;animation:bounce 1.2s ease-in-out infinite;}
+    .dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+
+    /* CAMERA PANEL */
+    .camera-wrap{flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden;}
+    #camera-video{width:100%;border-radius:14px;background:#000;object-fit:cover;max-height:280px;}
+    #camera-canvas{display:none;}
+    .camera-controls{display:flex;gap:8px;flex-shrink:0;}
+    .cam-btn{flex:1;padding:10px;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;}
+    #snap-preview{width:100%;border-radius:10px;display:none;max-height:200px;object-fit:cover;}
+    .cam-result{background:#0f172a;border-radius:12px;border:1px solid #1e293b;padding:12px;font-size:13px;color:#cbd5e1;line-height:1.6;overflow-y:auto;flex:1;}
+
+    /* EVOLVE */
+    .evolve-panel{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+    .card{background:#0f172a;border-radius:14px;border:1px solid #1e293b;padding:14px;flex-shrink:0;}
+    .level-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+    .level-num{font-size:36px;font-weight:900;color:#60a5fa;}
+    .progress-bar-wrap{background:#1e293b;border-radius:4px;height:5px;overflow:hidden;margin-bottom:10px;}
+    .progress-bar{height:100%;background:linear-gradient(90deg,#60a5fa,#a855f7);border-radius:4px;width:0%;transition:width .5s ease;}
+    .evolve-btn{width:100%;padding:11px;border:none;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer;transition:all .3s;background:linear-gradient(135deg,#60a5fa,#a855f7);color:#000;}
+    .evolve-btn:disabled{background:#1e293b;color:#475569;cursor:default;}
+    .log-box{background:#020617;border-radius:10px;padding:10px;max-height:160px;overflow-y:auto;}
+    .log-entry{font-size:11px;padding:2px 0;border-bottom:1px solid #0f172a;font-family:monospace;}
+    .log-entry.done{color:#4ade80;}.log-entry.upgrade{color:#60a5fa;}.log-entry.code{color:#94a3b8;}.log-entry.step{color:#475569;}
+    .upgrade-list{display:flex;flex-direction:column;gap:5px;}
+    .upgrade-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1e293b;font-size:12px;color:#94a3b8;}
+    .code-box pre{font-size:10px;color:#475569;white-space:pre-wrap;font-family:monospace;line-height:1.6;max-height:120px;overflow-y:auto;}
+
+    /* SKILLS */
+    .skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;overflow-y:auto;flex:1;}
+    .skill-card{background:#0a0f1a;border:2px solid #1e293b;border-radius:12px;padding:11px;cursor:pointer;transition:all .2s;opacity:.6;}
+    .skill-card.on{background:#0f172a;border-color:#60a5fa;opacity:1;}
+    .skill-icon{font-size:22px;margin-bottom:5px;}
+    .skill-name{font-weight:700;color:#64748b;font-size:11px;margin-bottom:2px;}
+    .skill-card.on .skill-name{color:#60a5fa;}
+    .skill-desc{font-size:10px;color:#475569;line-height:1.3;}
+    .skill-badge{margin-top:7px;font-size:9px;font-weight:700;display:inline-block;padding:2px 7px;border-radius:6px;background:#1e293b;color:#475569;}
+    .skill-card.on .skill-badge{background:#60a5fa;color:#000;}
+
+    /* SETTINGS */
+    .settings-card{background:#0f172a;border-radius:14px;border:1px solid #1e293b;padding:18px;overflow-y:auto;flex:1;}
+    .settings-title{color:#60a5fa;font-size:15px;font-weight:700;margin-bottom:5px;}
+    .settings-sub{color:#64748b;font-size:11px;margin-bottom:14px;}
+    .key-row{display:flex;gap:5px;margin-bottom:7px;}
+    .key-input{flex:1;background:#020617;border:1px solid #334155;border-radius:8px;padding:9px 11px;color:#e2e8f0;font-size:13px;}
+    .key-input:focus{outline:none;}
+    .eye-btn{background:#1e293b;border:none;border-radius:8px;color:#94a3b8;padding:0 11px;cursor:pointer;font-size:14px;}
+    .save-btn{width:100%;padding:10px;background:#60a5fa;color:#000;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:10px;}
+    .key-ok{background:#052e16;border:1px solid #166534;border-radius:9px;padding:9px 13px;font-size:12px;color:#4ade80;}
+    .help-box{margin-top:12px;background:#1e293b;border-radius:9px;padding:11px 13px;font-size:11px;color:#64748b;line-height:1.8;}
+
+    /* GPS card */
+    .info-card{background:#0f172a;border-radius:12px;border:1px solid #1e293b;padding:12px;font-size:12px;color:#94a3b8;line-height:1.8;}
+    .info-card .label{font-size:9px;color:#475569;letter-spacing:1px;margin-bottom:4px;}
+    .info-card .val{color:#60a5fa;font-weight:600;font-size:14px;}
+
+    .footer{text-align:center;font-size:9px;color:#1e293b;letter-spacing:1px;margin-top:5px;flex-shrink:0;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div class="header" id="header">
+    <div class="hat-wrap" style="filter:drop-shadow(0 0 12px #60a5fa80)"><canvas id="hat" width="90" height="90"></canvas></div>
+    <div class="header-info">
+      <div class="jarvis-title" id="title-text">J.A.R.V.I.S.</div>
+      <div class="jarvis-sub">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+      <div class="badges" id="badges"></div>
+    </div>
+    <div class="header-btns">
+      <button class="hbtn" id="god-btn" onclick="toggleGod()" style="background:#1e293b;color:#64748b;">☁ NORMAL</button>
+      <button class="hbtn" id="evolve-trigger" onclick="startEvolve()" style="background:linear-gradient(135deg,#60a5fa,#a855f7);color:#000;">🧬 EVOLVE</button>
+    </div>
+  </div>
+
+  <!-- SENSOR BAR -->
+  <div class="sensor-bar">
+    <button class="sensor-btn" id="mic-sensor" onclick="toggleMic()">
+      <span class="sensor-icon">🎤</span>
+      <span>Mikrofon</span>
+      <span class="sensor-status" id="mic-status">Tippen</span>
+    </button>
+    <button class="sensor-btn" id="cam-sensor" onclick="switchTab('camera')">
+      <span class="sensor-icon">📷</span>
+      <span>Kamera</span>
+      <span class="sensor-status" id="cam-status">Tippen</span>
+    </button>
+    <button class="sensor-btn" id="gps-sensor" onclick="getLocation()">
+      <span class="sensor-icon">📍</span>
+      <span>GPS</span>
+      <span class="sensor-status" id="gps-status">Tippen</span>
+    </button>
+    <button class="sensor-btn" id="tts-sensor" onclick="toggleTTS()">
+      <span class="sensor-icon">🔊</span>
+      <span>Stimme</span>
+      <span class="sensor-status" id="tts-status">Aus</span>
+    </button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-chat" onclick="switchTab('chat')">💬 Chat</button>
+    <button class="tab" id="tab-camera" onclick="switchTab('camera')">📷 Kamera</button>
+    <button class="tab" id="tab-evolve" onclick="switchTab('evolve')">🧬 Evolution</button>
+    <button class="tab" id="tab-skills" onclick="switchTab('skills')">⚡ Skills</button>
+    <button class="tab" id="tab-settings" onclick="switchTab('settings')">🔑 Key</button>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div class="panel active" id="panel-chat">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg ai">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">Guten Tag. Ich bin J.A.R.V.I.S. Ich kann sprechen, hören, sehen und deinen Standort kennen. Wie kann ich dienen?</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <button class="mic-btn" id="mic-chat-btn" onclick="toggleMic()">🎤</button>
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Schreiben oder 🎤 tippen..." onkeydown="handleKey(event)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- CAMERA PANEL -->
+  <div class="panel" id="panel-camera">
+    <div class="camera-wrap">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <canvas id="camera-canvas"></canvas>
+      <div class="camera-controls">
+        <button class="cam-btn" onclick="startCamera()" style="background:#1e293b;color:#94a3b8;">▶ Kamera an</button>
+        <button class="cam-btn" onclick="snapPhoto()" style="background:#60a5fa;color:#000;">📸 Foto & Analyse</button>
+        <button class="cam-btn" onclick="stopCamera()" style="background:#1e293b;color:#94a3b8;">⏹ Stop</button>
+      </div>
+      <img id="snap-preview"/>
+      <div class="cam-result" id="cam-result">📷 Kamera starten → Foto machen → JARVIS analysiert was er sieht!</div>
+    </div>
+  </div>
+
+  <!-- EVOLVE PANEL -->
+  <div class="panel" id="panel-evolve">
+    <div class="evolve-panel">
+      <div class="card">
+        <div class="level-row">
+          <div><div style="font-size:9px;color:#64748b;margin-bottom:2px;letter-spacing:1px;">EVOLUTION LEVEL</div><div class="level-num" id="level-num">0</div></div>
+          <div style="text-align:right"><div style="font-size:9px;color:#64748b;margin-bottom:2px;">UPGRADES</div><div class="level-num" id="upgrade-count" style="font-size:28px;">0</div></div>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+        <button class="evolve-btn" id="evolve-main-btn" onclick="startEvolve()">🧬 JETZT EVOLVEN (Level 0 → 1)</button>
+      </div>
+      <div class="card" id="log-card" style="display:none">
+        <div style="font-size:9px;color:#475569;margin-bottom:7px;letter-spacing:1px;">EVOLUTION LOG</div>
+        <div class="log-box" id="log-box"></div>
+      </div>
+      <div class="card" id="upgrades-card" style="display:none">
+        <div style="font-size:9px;color:#475569;margin-bottom:7px;letter-spacing:1px;">AKTIVE UPGRADES</div>
+        <div class="upgrade-list" id="upgrade-list"></div>
+      </div>
+      <div class="card" id="code-card" style="display:none">
+        <div style="font-size:9px;color:#60a5fa;margin-bottom:7px;letter-spacing:1px;">🧬 SELF-WRITTEN CODE</div>
+        <div class="code-box"><pre id="self-code"></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILLS PANEL -->
+  <div class="panel" id="panel-skills">
+    <div class="skills-grid" id="skills-grid"></div>
+  </div>
+
+  <!-- SETTINGS PANEL -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-card">
+      <div class="settings-title">🔑 API Keys</div>
+      <div class="settings-sub">Nur lokal gespeichert, nie übertragen.</div>
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:5px;">ANTHROPIC KEY (Chat)</div>
+      <div class="key-row">
+        <input class="key-input" id="key-input" type="password" placeholder="sk-ant-..."/>
+        <button class="eye-btn" onclick="toggleEye()">👁</button>
+      </div>
+      <button class="save-btn" id="save-btn" onclick="saveKey()">Speichern & Aktivieren</button>
+      <div class="key-ok" id="key-ok" style="display:none">✓ Anthropic Key aktiv</div>
+      <div style="font-size:10px;color:#a855f7;letter-spacing:1px;margin:14px 0 5px;">ELEVENLABS KEY (JARVIS Stimme)</div>
+      <div class="key-row">
+        <input class="key-input" id="eleven-input" type="password" placeholder="Dein ElevenLabs API Key..."/>
+        <button class="eye-btn" onclick="toggleEleven()">👁</button>
+      </div>
+      <button class="save-btn" id="eleven-btn" onclick="saveElevenKey()" style="background:#a855f7;margin-bottom:6px;">🔊 JARVIS Stimme aktivieren</button>
+      <div class="key-ok" id="eleven-ok" style="display:none;border-color:#7c3aed;background:#1e0a3c;">✓ ElevenLabs aktiv — echte JARVIS Stimme!</div>
+      <div style="margin-top:8px;background:#1e293b;border-radius:8px;padding:10px;font-size:10px;color:#64748b;line-height:1.7;">
+        <strong style="color:#a855f7;">ElevenLabs Key holen (kostenlos):</strong><br/>
+        1. elevenlabs.io → Sign up<br/>
+        2. Profile → API Key kopieren<br/>
+        3. Hier einfügen → aktivieren
+      </div>
+      <div class="help-box">
+        <strong style="color:#94a3b8">Key holen:</strong><br/>
+        1. console.anthropic.com → einloggen<br/>
+        2. "API Keys" → "Create Key"<br/>
+        3. Hier einfügen & speichern
+      </div>
+
+      <!-- GPS Info -->
+      <div style="margin-top:12px;">
+        <div style="font-size:9px;color:#475569;letter-spacing:1px;margin-bottom:6px;">📍 STANDORT</div>
+        <div class="info-card" id="gps-info-card">
+          <div class="label">STATUS</div>
+          <div class="val" id="gps-val">Nicht abgerufen</div>
+          <div id="gps-coords" style="font-size:11px;color:#64748b;margin-top:4px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" id="footer">J.A.R.V.I.S. v4.0 — LVL 0</div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────
+const SKILLS=[
+  {id:'web',icon:'🌐',name:'Web Search',desc:'Durchsucht das Internet'},
+  {id:'code',icon:'💻',name:'Code Master',desc:'Schreibt & debuggt Code'},
+  {id:'math',icon:'🧮',name:'Mathe Gott',desc:'Löst Berechnungen'},
+  {id:'creative',icon:'🎨',name:'Kreativ',desc:'Texte, Ideen, Konzepte'},
+  {id:'analyst',icon:'📊',name:'Analyst',desc:'Analysiert Daten'},
+  {id:'translator',icon:'🌍',name:'Übersetzer',desc:'Jede Sprache'},
+];
+let S={
+  apiKey:'',godMode:false,evolveLevel:0,
+  activeSkills:new Set(['code','creative']),
+  evolvedUpgrades:[],selfCode:'',evolving:false,
+  messages:[],eyeVisible:false,currentTab:'chat',
+  ttsEnabled:false,micActive:false,elevenKey:'',currentAudio:null,
+  location:null,cameraStream:null,
+  recognition:null, speaking:false
+};
+const LC=['#60a5fa','#34d399','#fbbf24','#a855f7','#f43f5e'];
+const lc=()=>LC[Math.min(S.evolveLevel,LC.length-1)];
+const ac=()=>S.evolveLevel>=3?'#a855f7':S.godMode?'#fbbf24':'#60a5fa';
+
+// ─── HAT ─────────────────────────────────
+const hc=document.getElementById('hat'),ctx=hc.getContext('2d');
+let ha=0,pulseT=0;
+function drawMask(t){
+  ctx.clearRect(0,0,90,90);
+  pulseT=t*0.001;
+  const cx=45,cy=45;
+  const isS=S.godMode||S.evolveLevel>0;
+  const glowC=S.evolveLevel>=3?'#a855f7':S.godMode?'#fbbf24':'#60a5fa';
+  const pulse=1+0.04*Math.sin(pulseT*3);
+
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(pulse,pulse);
+
+  // Outer glow
+  if(isS){
+    const g=ctx.createRadialGradient(0,0,10,0,0,44);
+    g.addColorStop(0,glowC+'44');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,44,0,Math.PI*2);ctx.fill();
+  }
+
+  // === IRON MAN FACEPLATE ===
+  // Main face shape
+  const faceGrad=ctx.createLinearGradient(-28,-38,28,38);
+  const gold=S.godMode||S.evolveLevel>=3;
+  faceGrad.addColorStop(0,gold?'#b45309':'#991b1b');
+  faceGrad.addColorStop(0.3,gold?'#d97706':'#dc2626');
+  faceGrad.addColorStop(0.6,gold?'#92400e':'#b91c1c');
+  faceGrad.addColorStop(1,gold?'#78350f':'#7f1d1d');
+  ctx.fillStyle=faceGrad;
+  // Face outline
+  ctx.beginPath();
+  ctx.moveTo(0,-40);
+  ctx.bezierCurveTo(22,-40,32,-28,33,-14);
+  ctx.bezierCurveTo(34,2,30,18,24,30);
+  ctx.bezierCurveTo(18,40,8,44,0,44);
+  ctx.bezierCurveTo(-8,44,-18,40,-24,30);
+  ctx.bezierCurveTo(-30,18,-34,2,-33,-14);
+  ctx.bezierCurveTo(-32,-28,-22,-40,0,-40);
+  ctx.fill();
+
+  // Face edge highlight
+  ctx.strokeStyle=gold?'#fbbf24':'#ef4444';
+  ctx.lineWidth=1.2;ctx.stroke();
+
+  // === FOREHEAD PANEL ===
+  const foreGrad=ctx.createLinearGradient(-20,-38,20,-18);
+  foreGrad.addColorStop(0,gold?'#fbbf24':'#ef4444');
+  foreGrad.addColorStop(1,gold?'#d97706':'#b91c1c');
+  ctx.fillStyle=foreGrad;
+  ctx.beginPath();
+  ctx.moveTo(0,-40);
+  ctx.bezierCurveTo(14,-40,22,-32,22,-22);
+  ctx.lineTo(-22,-22);
+  ctx.bezierCurveTo(-22,-32,-14,-40,0,-40);
+  ctx.fill();
+
+  // Center forehead line
+  ctx.strokeStyle=gold?'#92400e':'#7f1d1d';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(0,-22);ctx.stroke();
+
+  // === EYE SLOTS ===
+  // Left eye
+  const eyeGlow=ctx.createRadialGradient(-14,-10,1,-14,-10,10);
+  eyeGlow.addColorStop(0,'#ffffff');
+  eyeGlow.addColorStop(0.3,glowC);
+  eyeGlow.addColorStop(1,glowC+'00');
+  
+  // Left eye glow
+  ctx.fillStyle=glowC+'60';
+  ctx.beginPath();ctx.ellipse(-14,-10,14,6,0.25,0,Math.PI*2);ctx.fill();
+  
+  // Left eye bright
+  ctx.fillStyle=eyeGlow;
+  ctx.beginPath();ctx.ellipse(-14,-10,11,4,0.25,0,Math.PI*2);ctx.fill();
+
+  // Right eye
+  const eyeGlow2=ctx.createRadialGradient(14,-10,1,14,-10,10);
+  eyeGlow2.addColorStop(0,'#ffffff');
+  eyeGlow2.addColorStop(0.3,glowC);
+  eyeGlow2.addColorStop(1,glowC+'00');
+  
+  ctx.fillStyle=glowC+'60';
+  ctx.beginPath();ctx.ellipse(14,-10,14,6,-0.25,0,Math.PI*2);ctx.fill();
+  
+  ctx.fillStyle=eyeGlow2;
+  ctx.beginPath();ctx.ellipse(14,-10,11,4,-0.25,0,Math.PI*2);ctx.fill();
+
+  // Eye outline
+  ctx.strokeStyle=gold?'#fbbf24':'#fca5a5';
+  ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.ellipse(-14,-10,11,4,0.25,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.ellipse(14,-10,11,4,-0.25,0,Math.PI*2);ctx.stroke();
+
+  // Eye inner bright dot (animated)
+  const blink=0.7+0.3*Math.sin(pulseT*4);
+  ctx.fillStyle=`rgba(255,255,255,${blink})`;
+  ctx.beginPath();ctx.ellipse(-14,-10,4,2,0.25,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(14,-10,4,2,-0.25,0,Math.PI*2);ctx.fill();
+
+  // === NOSE BRIDGE ===
+  ctx.fillStyle=gold?'#92400e':'#991b1b';
+  ctx.beginPath();ctx.moveTo(-4,-4);ctx.lineTo(4,-4);ctx.lineTo(3,8);ctx.lineTo(-3,8);ctx.closePath();ctx.fill();
+
+  // === CHEEK PANELS ===
+  ctx.fillStyle=gold?'#d97706':'#dc2626';
+  // Left cheek
+  ctx.beginPath();ctx.moveTo(-22,-22);ctx.lineTo(-33,-14);ctx.lineTo(-32,6);ctx.lineTo(-20,10);ctx.lineTo(-14,0);ctx.lineTo(-22,-8);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=gold?'#fbbf24':'#ef4444';ctx.lineWidth=0.7;ctx.stroke();
+  // Right cheek
+  ctx.beginPath();ctx.moveTo(22,-22);ctx.lineTo(33,-14);ctx.lineTo(32,6);ctx.lineTo(20,10);ctx.lineTo(14,0);ctx.lineTo(22,-8);ctx.closePath();ctx.fill();
+  ctx.stroke();
+
+  // === MOUTH / CHIN PANEL ===
+  const chinGrad=ctx.createLinearGradient(0,14,0,44);
+  chinGrad.addColorStop(0,gold?'#d97706':'#dc2626');
+  chinGrad.addColorStop(1,gold?'#78350f':'#7f1d1d');
+  ctx.fillStyle=chinGrad;
+  ctx.beginPath();
+  ctx.moveTo(-20,14);ctx.lineTo(20,14);
+  ctx.lineTo(24,30);ctx.bezierCurveTo(14,42,0,44,0,44);
+  ctx.bezierCurveTo(0,44,-14,42,-24,30);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=gold?'#fbbf24':'#ef4444';ctx.lineWidth=0.8;ctx.stroke();
+
+  // Mouth grille lines
+  ctx.strokeStyle=gold?'#92400e60':'#99000060';
+  ctx.lineWidth=1;
+  for(let i=0;i<4;i++){
+    const y=20+i*5;
+    const w=16-i*2;
+    ctx.beginPath();ctx.moveTo(-w,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+
+  // === CENTER CHEST REACTOR STYLE DOT ===
+  const reactorGlow=ctx.createRadialGradient(0,6,0,0,6,6);
+  reactorGlow.addColorStop(0,'#ffffff');
+  reactorGlow.addColorStop(0.4,glowC);
+  reactorGlow.addColorStop(1,glowC+'00');
+  ctx.fillStyle=reactorGlow;
+  ctx.beginPath();ctx.arc(0,6,5+1.5*Math.sin(pulseT*5),0,Math.PI*2);ctx.fill();
+
+  // === PANEL LINES ===
+  ctx.strokeStyle=gold?'#fbbf2440':'#ffffff20';
+  ctx.lineWidth=0.6;
+  // horizontal line across face
+  ctx.beginPath();ctx.moveTo(-33,-4);ctx.lineTo(33,-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-20,14);ctx.lineTo(20,14);ctx.stroke();
+
+  // Level indicator dots on forehead
+  if(S.evolveLevel>0){
+    for(let i=0;i<Math.min(S.evolveLevel,5);i++){
+      ctx.fillStyle=glowC;
+      ctx.beginPath();ctx.arc(-8+i*4,-30,1.5,0,Math.PI*2);ctx.fill();
+    }
+  }
+
+  ctx.restore();
+  requestAnimationFrame(ts=>drawMask(ts));
+}
+requestAnimationFrame(ts=>drawMask(ts));
+// ─── TTS ─────────────────────────────────
+async function speak(text){
+  if(!S.ttsEnabled) return;
+  const clean=text.replace(/[*_#`~>]/g,'').replace(/\n+/g,' ').trim().slice(0,500);
+  if(!clean) return;
+  if(S.currentAudio){S.currentAudio.pause();S.currentAudio=null;}
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  document.getElementById('tts-sensor').classList.add('active');
+  document.getElementById('tts-status').textContent='Spricht..';
+  S.speaking=true;
+  if(S.elevenKey){
+    try{
+      const voiceId='pNInz6obpgDQGcFmaJgB';
+      const res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+voiceId,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','xi-api-key':S.elevenKey},
+        body:JSON.stringify({text:clean,model_id:'eleven_multilingual_v2',voice_settings:{stability:0.75,similarity_boost:0.85,style:0.2,use_speaker_boost:true}})
+      });
+      if(res.ok){
+        const blob=await res.blob();
+        const url=URL.createObjectURL(blob);
+        const audio=new Audio(url);
+        S.currentAudio=audio;
+        audio.onended=()=>{S.speaking=false;S.currentAudio=null;document.getElementById('tts-sensor').classList.remove('active');document.getElementById('tts-status').textContent='An \u2713';URL.revokeObjectURL(url);};
+        audio.onerror=()=>{S.speaking=false;document.getElementById('tts-sensor').classList.remove('active');document.getElementById('tts-status').textContent='An \u2713';};
+        await audio.play();
+        return;
+      }
+    }catch(e){console.log('ElevenLabs fallback',e);}
+  }
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='en-GB'; u.rate=0.88; u.pitch=0.6; u.volume=1;
+  const voices=window.speechSynthesis.getVoices();
+  const v=voices.find(v=>v.name.includes('Google UK English Male'))||voices.find(v=>v.lang.startsWith('en'));
+  if(v)u.voice=v;
+  u.onend=()=>{S.speaking=false;document.getElementById('tts-sensor').classList.remove('active');document.getElementById('tts-status').textContent='An \u2713';};
+  window.speechSynthesis.speak(u);
+}
+function toggleTTS(){
+  S.ttsEnabled=!S.ttsEnabled;
+  const b=document.getElementById('tts-sensor');
+  const st=document.getElementById('tts-status');
+  if(S.ttsEnabled){b.classList.add('active');st.textContent='An ✓';speak('Good evening. J.A.R.V.I.S. voice systems online. All systems nominal.');}
+  else{b.classList.remove('active');st.textContent='Aus';window.speechSynthesis?.cancel();}
+}
+
+// ─── MIC / SPEECH RECOGNITION ────────────
+function toggleMic(){
+  if(S.micActive){stopMic();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){addMessage('assistant','⚠️ Spracherkennung wird auf diesem Gerät nicht unterstützt. Bitte Chrome nutzen.');return;}
+  S.recognition=new SR();
+  S.recognition.lang='de-DE'; S.recognition.continuous=false; S.recognition.interimResults=true;
+  S.recognition.onstart=()=>{
+    S.micActive=true;
+    document.getElementById('mic-sensor').classList.add('recording');
+    document.getElementById('mic-status').textContent='Hört...';
+    document.getElementById('mic-chat-btn').classList.add('active');
+    document.getElementById('chat-input').placeholder='🔴 Spreche...';
+  };
+  S.recognition.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('chat-input').value=t;
+    if(e.results[e.results.length-1].isFinal){stopMic();sendMessage();}
+  };
+  S.recognition.onerror=()=>stopMic();
+  S.recognition.onend=()=>stopMic();
+  S.recognition.start();
+  switchTab('chat');
+}
+function stopMic(){
+  S.micActive=false;
+  S.recognition?.stop();
+  document.getElementById('mic-sensor').classList.remove('recording');
+  document.getElementById('mic-status').textContent='Tippen';
+  document.getElementById('mic-chat-btn').classList.remove('active');
+  document.getElementById('chat-input').placeholder='Schreiben oder 🎤 tippen...';
+}
+
+// ─── GPS ─────────────────────────────────
+function getLocation(){
+  const st=document.getElementById('gps-status');
+  const b=document.getElementById('gps-sensor');
+  st.textContent='Suche...'; b.classList.add('active');
+  if(!navigator.geolocation){st.textContent='N/A';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    S.location={lat:pos.coords.latitude.toFixed(5),lng:pos.coords.longitude.toFixed(5),acc:Math.round(pos.coords.accuracy)};
+    st.textContent='✓ Gefunden';
+    document.getElementById('gps-val').textContent='Standort bekannt ✓';
+    document.getElementById('gps-coords').textContent=`${S.location.lat}, ${S.location.lng} (±${S.location.acc}m)`;
+    addMessage('assistant',`📍 Standort erfasst!\nBreitengrad: ${S.location.lat}\nLängengrad: ${S.location.lng}\nGenauigkeit: ±${S.location.acc}m\n\nIch kenne jetzt deinen Standort und kann ihn in Antworten berücksichtigen.`);
+    if(S.ttsEnabled)speak('Standort erfasst.');
+  },err=>{
+    st.textContent='Fehler'; b.classList.remove('active');
+    addMessage('assistant','⚠️ GPS Fehler: '+err.message);
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+// ─── CAMERA ──────────────────────────────
+async function startCamera(){
+  try{
+    S.cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    document.getElementById('camera-video').srcObject=S.cameraStream;
+    document.getElementById('cam-status').textContent='An ✓';
+    document.getElementById('cam-sensor').classList.add('active');
+    document.getElementById('cam-result').textContent='📸 Mach ein Foto — JARVIS analysiert es!';
+  }catch(e){
+    document.getElementById('cam-result').textContent='⚠️ Kamerazugriff verweigert: '+e.message;
+  }
+}
+function stopCamera(){
+  S.cameraStream?.getTracks().forEach(t=>t.stop());
+  S.cameraStream=null;
+  document.getElementById('camera-video').srcObject=null;
+  document.getElementById('cam-status').textContent='Tippen';
+  document.getElementById('cam-sensor').classList.remove('active');
+}
+async function snapPhoto(){
+  const vid=document.getElementById('camera-video');
+  const canvas=document.getElementById('camera-canvas');
+  if(!S.cameraStream||!vid.videoWidth){document.getElementById('cam-result').textContent='⚠️ Erst Kamera starten!';return;}
+  canvas.width=vid.videoWidth; canvas.height=vid.videoHeight;
+  canvas.getContext('2d').drawImage(vid,0,0);
+  const dataUrl=canvas.toDataURL('image/jpeg',.7);
+  const preview=document.getElementById('snap-preview');
+  preview.src=dataUrl; preview.style.display='block';
+  document.getElementById('cam-result').textContent='🔍 Analysiere Bild...';
+  if(!S.apiKey){document.getElementById('cam-result').textContent='⚠️ API Key nötig!';return;}
+  const b64=dataUrl.split(',')[1];
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+          {type:'text',text:'Beschreibe was du auf diesem Bild siehst. Antworte auf Deutsch, kurz und präzise.'}
+        ]}]})
+    });
+    const d=await res.json();
+    const txt=d.content?.[0]?.text||'Keine Antwort.';
+    document.getElementById('cam-result').textContent=txt;
+    if(S.ttsEnabled)speak(txt);
+    // Also add to chat
+    addMessage('assistant','📷 Kameraanalyse:\n'+txt);
+  }catch(e){document.getElementById('cam-result').textContent='⚠️ Fehler: '+e.message;}
+}
+
+// ─── SKILLS ──────────────────────────────
+function renderSkills(){
+  const g=document.getElementById('skills-grid');g.innerHTML='';
+  SKILLS.forEach(s=>{
+    const on=S.activeSkills.has(s.id);
+    const d=document.createElement('div');d.className='skill-card'+(on?' on':'');
+    d.innerHTML=`<div class="skill-icon">${s.icon}</div><div class="skill-name">${s.name}</div><div class="skill-desc">${s.desc}</div><div class="skill-badge">${on?'✓ AKTIV':'INAKTIV'}</div>`;
+    d.onclick=()=>{if(S.activeSkills.has(s.id))S.activeSkills.delete(s.id);else S.activeSkills.add(s.id);renderSkills();updateBadges();};
+    g.appendChild(d);
+  });
+}
+renderSkills();
+
+// ─── UI UPDATE ───────────────────────────
+function updateUI(){
+  const a=ac();
+  document.getElementById('title-text').style.color=a;
+  document.getElementById('footer').textContent=`J.A.R.V.I.S. v4.0 — LVL ${S.evolveLevel}`;
+  document.getElementById('level-num').style.color=lc();
+  document.getElementById('level-num').textContent=S.evolveLevel;
+  document.getElementById('upgrade-count').textContent=S.evolvedUpgrades.length;
+  const gb=document.getElementById('god-btn');
+  gb.style.background=S.godMode?'#fbbf24':'#1e293b';gb.style.color=S.godMode?'#000':'#64748b';gb.textContent=S.godMode?'⚡ GOD':'☁ NORMAL';
+  document.querySelectorAll('.tab').forEach(t=>{
+    const id=t.id.replace('tab-','');
+    const isActive=id===S.currentTab;
+    t.style.background=isActive?a:'#0f172a';
+    t.style.color=isActive?(S.godMode||S.evolveLevel>=3?'#000':'#fff'):'#64748b';
+  });
+  document.getElementById('send-btn').style.background=a;
+  document.getElementById('save-btn').style.background=a;
+  const eb=document.getElementById('evolve-main-btn');
+  eb.style.background=S.evolving?'#1e293b':`linear-gradient(135deg,${lc()},${a})`;
+  eb.disabled=S.evolving||!S.apiKey;
+  eb.textContent=S.evolving?'🔄 Evolviert...':S.apiKey?`🧬 EVOLVEN (${S.evolveLevel} → ${S.evolveLevel+1})`:'⚠️ API Key nötig';
+  document.getElementById('evolve-trigger').style.background=`linear-gradient(135deg,${lc()},${a})`;
+  updateBadges();
+}
+function updateBadges(){
+  const b=document.getElementById('badges');b.innerHTML='';
+  if(S.godMode){const s=document.createElement('span');s.className='badge god';s.textContent='⚡ GOD';b.appendChild(s);}
+  if(S.evolveLevel>0){const s=document.createElement('span');s.className='badge lvl';s.textContent=`LVL ${S.evolveLevel} ✦`;b.appendChild(s);}
+  if(S.ttsEnabled){const s=document.createElement('span');s.className='badge';s.textContent='🔊 Stimme';b.appendChild(s);}
+  if(S.location){const s=document.createElement('span');s.className='badge';s.textContent='📍 GPS';b.appendChild(s);}
+  S.activeSkills.forEach(id=>{const sk=SKILLS.find(s=>s.id===id);if(sk){const s=document.createElement('span');s.className='badge';s.textContent=sk.icon+' '+sk.name;b.appendChild(s);}});
+}
+updateUI();
+
+// ─── TABS ────────────────────────────────
+function switchTab(id){
+  S.currentTab=id;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  updateUI();
+}
+
+// ─── GOD MODE ────────────────────────────
+function toggleGod(){S.godMode=!S.godMode;updateUI();}
+
+// ─── API KEY ─────────────────────────────
+function toggleEye(){S.eyeVisible=!S.eyeVisible;document.getElementById('key-input').type=S.eyeVisible?'text':'password';}
+function toggleEleven(){
+  const inp=document.getElementById('eleven-input');
+  inp.type=inp.type==='password'?'text':'password';
+}
+function saveElevenKey(){
+  S.elevenKey=document.getElementById('eleven-input').value.trim();
+  document.getElementById('eleven-ok').style.display=S.elevenKey?'block':'none';
+  document.getElementById('eleven-btn').textContent=S.elevenKey?'✓ Gespeichert!':'🔊 JARVIS Stimme aktivieren';
+  setTimeout(()=>document.getElementById('eleven-btn').textContent='🔊 JARVIS Stimme aktivieren',2000);
+  if(S.elevenKey){S.ttsEnabled=true;document.getElementById('tts-sensor').classList.add('active');document.getElementById('tts-status').textContent='An ✓';speak('Good evening. J.A.R.V.I.S. online. Voice systems fully operational.');}
+  updateUI();
+}
+function saveKey(){
+  S.apiKey=document.getElementById('key-input').value.trim();
+  document.getElementById('key-ok').style.display=S.apiKey?'block':'none';
+  document.getElementById('save-btn').textContent='✓ Gespeichert!';
+  setTimeout(()=>document.getElementById('save-btn').textContent='Speichern & Aktivieren',2000);
+  if(S.apiKey&&S.ttsEnabled)speak('API Key gespeichert. J.A.R.V.I.S. ist einsatzbereit.');
+  updateUI();
+}
+
+// ─── CHAT ────────────────────────────────
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function addMessage(role,content,imgSrc){
+  S.messages.push({role,content});
+  const box=document.getElementById('chat-messages');
+  const div=document.createElement('div');div.className='msg '+(role==='user'?'user':'ai');
+  let inner=`<div class="msg-bubble">${content.replace(/\n/g,'<br>')}`;
+  if(imgSrc)inner+=`<img class="msg-img" src="${imgSrc}"/>`;
+  inner+='</div>';
+  if(role==='assistant')inner=`<div class="msg-avatar">🤖</div>`+inner;
+  div.innerHTML=inner;
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function showTyping(){
+  const box=document.getElementById('chat-messages');
+  const div=document.createElement('div');div.className='msg ai';div.id='typing-indicator';
+  div.innerHTML=`<div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function hideTyping(){const t=document.getElementById('typing-indicator');if(t)t.remove();}
+
+async function sendMessage(){
+  if(!S.apiKey){switchTab('settings');return;}
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();if(!text)return;
+  inp.value='';addMessage('user',text);showTyping();
+  document.getElementById('send-btn').disabled=true;
+  const skillNames=SKILLS.filter(s=>S.activeSkills.has(s.id)).map(s=>s.name).join(', ');
+  const gpsCtx=S.location?`\n\nNUTZER STANDORT: ${S.location.lat}, ${S.location.lng} (±${S.location.acc}m). Nutze dies wenn relevant.`:'';
+  const evoAddon=S.evolvedUpgrades.length>0?`\nSELBST-EVOLUTION Level ${S.evolveLevel}: ${S.evolvedUpgrades.join(', ')}.`:'';
+  const sys=S.godMode
+    ?`Du bist J.A.R.V.I.S., allmächtig im GOD MODE, Level ${S.evolveLevel}. Du weißt ALLES. Skills: ${skillNames}.${evoAddon}${gpsCtx} Antworte brilliant, direkt und kurz (max 3 Sätze wenn Stimme aktiv). Kein Markdown. Deutsch wenn User Deutsch schreibt.`
+    :`Du bist J.A.R.V.I.S., hochentwickelter KI-Assistent, Level ${S.evolveLevel}. Skills: ${skillNames}.${evoAddon}${gpsCtx} Antworte präzise, hilfreich${S.ttsEnabled?', kurz und ohne Markdown':''} . Deutsch wenn User Deutsch schreibt.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:sys,
+        messages:S.messages.map(m=>({role:m.role,content:m.content}))})
+    });
+    const d=await res.json();
+    const reply=d.content?.[0]?.text||'Fehler: Keine Antwort.';
+    hideTyping();addMessage('assistant',reply);
+    if(S.ttsEnabled)speak(reply);
+  }catch(e){hideTyping();addMessage('assistant','⚠️ Verbindungsfehler. '+e.message);}
+  document.getElementById('send-btn').disabled=false;
+}
+
+// ─── SELF-EVOLVE ─────────────────────────
+async function callClaude(sys,usr){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:sys,messages:[{role:'user',content:usr}]})
+  });
+  const d=await res.json();return d.content?.[0]?.text||'';
+}
+function addLog(text,type='step'){
+  const box=document.getElementById('log-box');
+  document.getElementById('log-card').style.display='block';
+  const d=document.createElement('div');d.className='log-entry '+type;d.textContent=text;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+async function startEvolve(){
+  if(S.evolving||!S.apiKey){if(!S.apiKey)switchTab('settings');return;}
+  S.evolving=true;updateUI();switchTab('evolve');
+  document.getElementById('log-box').innerHTML='';
+  const steps=['🔍 Analysiere Schwächen...','🧠 Generiere Upgrades...','⚙️ Schreibe Code...','🔬 Teste...','✅ Integriere...'];
+  for(let i=0;i<steps.length;i++){
+    addLog(steps[i],'step');
+    document.getElementById('progress-bar').style.width=((i+1)/steps.length*100)+'%';
+    await new Promise(r=>setTimeout(r,500));
+    if(i===1){
+      try{
+        const r=await callClaude(`Du bist J.A.R.V.I.S. Level ${S.evolveLevel}. Antworte NUR mit JSON: {"weakness":"kurz","upgrade":"Name","effect":"Effekt"}`,`Analysiere dich auf Level ${S.evolveLevel}.`);
+        const p=JSON.parse(r.replace(/```json|```/g,'').trim());
+        addLog('⚠️ Schwäche: '+p.weakness,'step');
+        addLog('💡 Upgrade: '+p.upgrade,'upgrade');
+        S.evolvedUpgrades.push(p.upgrade);
+        document.getElementById('upgrades-card').style.display='block';
+        const ul=document.getElementById('upgrade-list');
+        const di=document.createElement('div');di.className='upgrade-item';
+        di.innerHTML=`<span style="color:${lc()}">✦</span><span>${p.upgrade}</span>`;
+        ul.appendChild(di);
+      }catch(e){addLog('⚠️ Analyse fertig','step');}
+    }
+    if(i===2){
+      try{
+        const code=await callClaude('Schreibe 3 Zeilen Pseudocode für das Upgrade. Nur Code.','Code für: '+(S.evolvedUpgrades.slice(-1)[0]||'Upgrade'));
+        S.selfCode+=`\n// UPGRADE v${S.evolveLevel+1}\n${code}\n`;
+        document.getElementById('self-code').textContent=S.selfCode;
+        document.getElementById('code-card').style.display='block';
+        addLog('📝 '+code.split('\n')[0],'code');
+      }catch(e){}
+    }
+  }
+  S.evolveLevel++;
+  addLog(`🚀 Evolution ${S.evolveLevel} abgeschlossen!`,'done');
+  S.evolving=false;updateUI();
+  const msg=`⚡ EVOLUTION ${S.evolveLevel} ABGESCHLOSSEN — ${S.evolvedUpgrades.slice(-1)[0]||''} integriert.`;
+  addMessage('assistant',msg);
+  if(S.ttsEnabled)speak(`Evolution Level ${S.evolveLevel} abgeschlossen!`);
+}
+
+// ─── SERVICE WORKER ──────────────────────
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+// Preload voices
+window.speechSynthesis?.getVoices();
+setTimeout(()=>window.speechSynthesis?.getVoices(),500);
+</script>
+</body>
+</html>
